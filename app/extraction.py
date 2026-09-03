@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 import os
 
 import anthropic
@@ -114,6 +115,9 @@ async def extract_label_fields(image_bytes: bytes) -> dict:
             }],
         )
     except anthropic.APIStatusError as exc:
+        # Full detail to server logs; users get a plain-language message.
+        logging.getLogger("uvicorn.error").error(
+            "Anthropic API error %s: %s", exc.status_code, exc.response.text[:2000])
         raise ExtractionError(f"Label reading service error ({exc.status_code}). Please retry.") from exc
     except anthropic.APIConnectionError as exc:
         raise ExtractionError("Could not reach the label reading service. Please retry.") from exc
