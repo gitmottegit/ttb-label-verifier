@@ -1,0 +1,7 @@
+filename,brand_name,class_type,alcohol_content,net_contents
+01_compliant.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL
+02_wrong_abv.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL
+03_titlecase_warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL
+04_reworded_warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL
+05_no_warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL
+06_case_variant_brand.png,Stone's Throw,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL

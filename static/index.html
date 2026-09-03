@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Label Verifier — TTB Prototype</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <h1>🏷️ Label Verifier</h1>
+    <p class="tagline">Upload a label, enter what the application says, and get an answer in seconds.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist" aria-label="Mode">
+    <button id="tab-single" class="tab active" role="tab" aria-selected="true" aria-controls="panel-single">Check one label</button>
+    <button id="tab-batch" class="tab" role="tab" aria-selected="false" aria-controls="panel-batch">Check many labels</button>
+  </nav>
+
+  <!-- ============ SINGLE ============ -->
+  <section id="panel-single" role="tabpanel" aria-labelledby="tab-single">
+    <div class="columns">
+      <div class="card">
+        <h2>Step 1 — The label image</h2>
+        <div id="drop-single" class="dropzone" tabindex="0" role="button"
+             aria-label="Upload a label image. Click or drag a file here.">
+          <input type="file" id="file-single" accept="image/*" hidden>
+          <div class="drop-inner">
+            <div class="drop-icon">📄</div>
+            <p class="drop-title">Click here to choose the label picture</p>
+            <p class="drop-sub">or drag the file onto this box · PNG or JPEG</p>
+          </div>
+          <img id="preview-single" class="preview" alt="Label preview" hidden>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Step 2 — What the application says</h2>
+        <form id="form-single">
+          <label>Brand name
+            <input type="text" name="brand_name" placeholder="e.g. OLD TOM DISTILLERY" autocomplete="off">
+          </label>
+          <label>Class / type
+            <input type="text" name="class_type" placeholder="e.g. Kentucky Straight Bourbon Whiskey" autocomplete="off">
+          </label>
+          <label>Alcohol content
+            <input type="text" name="alcohol_content" placeholder="e.g. 45% Alc./Vol." autocomplete="off">
+          </label>
+          <label>Net contents
+            <input type="text" name="net_contents" placeholder="e.g. 750 mL" autocomplete="off">
+          </label>
+          <p class="hint">Leave a box empty to skip that check. The government warning is always checked.</p>
+          <button type="submit" id="btn-single" class="primary" disabled>Check this label</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="status-single" class="status" role="status" aria-live="polite" hidden></div>
+    <div id="result-single" class="result" hidden></div>
+  </section>
+
+  <!-- ============ BATCH ============ -->
+  <section id="panel-batch" role="tabpanel" aria-labelledby="tab-batch" hidden>
+    <div class="columns">
+      <div class="card">
+        <h2>Step 1 — The label images</h2>
+        <div id="drop-batch" class="dropzone" tabindex="0" role="button"
+             aria-label="Upload label images. Click or drag files here.">
+          <input type="file" id="file-batch" accept="image/*" multiple hidden>
+          <div class="drop-inner">
+            <div class="drop-icon">📚</div>
+            <p class="drop-title">Click here to choose label pictures</p>
+            <p class="drop-sub">You can select up to 300 at once</p>
+          </div>
+        </div>
+        <p id="batch-count" class="hint"></p>
+      </div>
+
+      <div class="card">
+        <h2>Step 2 — Application data <span class="optional">(optional)</span></h2>
+        <p class="hint">Attach a CSV with columns <code>filename, brand_name, class_type,
+        alcohol_content, net_contents</code> to compare each label against its application.
+        Without it, each label is still read and its government warning checked.</p>
+        <label class="file-label">CSV file
+          <input type="file" id="csv-batch" accept=".csv,text/csv">
+        </label>
+        <button type="button" id="btn-batch" class="primary" disabled>Check all labels</button>
+      </div>
+    </div>
+
+    <div id="status-batch" class="status" role="status" aria-live="polite" hidden></div>
+    <div id="result-batch" class="result" hidden></div>
+  </section>
+</main>
+
+<footer class="wrap footer">
+  <p>Prototype for evaluation only — results must be confirmed by a compliance agent.
+     Reads labels with Claude vision; all compliance rules are checked deterministically in code.</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
