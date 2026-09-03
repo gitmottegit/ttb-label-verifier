@@ -13,10 +13,11 @@ import asyncio
 import csv
 import io
 import time
+from collections import defaultdict, deque
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -26,8 +27,28 @@ from .verification import build_report
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 BATCH_CONCURRENCY = 8  # parallel model calls; keeps a 300-label dump moving
 BATCH_MAX_FILES = 300
+RATE_LIMIT_PER_MINUTE = 40  # per client IP; a batch upload counts as one request
 
 app = FastAPI(title="TTB Label Verifier", version="1.0.0")
+
+_request_log: dict[str, deque] = defaultdict(deque)
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    """Light per-IP throttle so a public demo URL can't drain API credits."""
+    path = request.url.path
+    if path.startswith("/api/") and path != "/api/health":
+        window = _request_log[request.client.host if request.client else "unknown"]
+        now = time.monotonic()
+        while window and now - window[0] > 60:
+            window.popleft()
+        if len(window) >= RATE_LIMIT_PER_MINUTE:
+            return JSONResponse(
+                {"error": "Too many requests from this address — wait a minute and retry."},
+                status_code=429)
+        window.append(now)
+    return await call_next(request)
 
 
 @app.get("/api/health")
@@ -105,21 +126,22 @@ async def batch(
                           "brand_name, class_type, alcohol_content, net_contents."},
                 status_code=422)
 
-    payloads = [(img.filename or f"label_{i}", await img.read())
-                for i, img in enumerate(images, start=1)]
-
     semaphore = asyncio.Semaphore(BATCH_CONCURRENCY)
 
-    async def run(filename: str, data: bytes) -> dict:
+    async def run(img: UploadFile, index: int) -> dict:
+        filename = img.filename or f"label_{index}"
+        # Read inside the semaphore so at most BATCH_CONCURRENCY images are
+        # held in memory at once — a 300-file dump must not exhaust RAM.
         async with semaphore:
+            data = await img.read()
             return await _verify_one(filename, data, app_rows.get(filename, {}))
 
     started = time.perf_counter()
-    results = await asyncio.gather(*(run(f, d) for f, d in payloads))
+    results = await asyncio.gather(*(run(img, i) for i, img in enumerate(images, start=1)))
     return JSONResponse({
         "count": len(results),
         "elapsed_ms": int((time.perf_counter() - started) * 1000),
-        "csv_rows_matched": sum(1 for f, _ in payloads if f in app_rows),
+        "csv_rows_matched": sum(1 for r in results if r["filename"] in app_rows),
         "results": list(results),
     })
 

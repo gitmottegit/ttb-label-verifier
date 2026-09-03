@@ -35,7 +35,9 @@ def _get_client() -> anthropic.AsyncAnthropic:
         if not os.environ.get("ANTHROPIC_API_KEY"):
             raise ExtractionError(
                 "Server is missing its ANTHROPIC_API_KEY — see README setup steps.")
-        _client = anthropic.AsyncAnthropic()
+        # Fail fast: a hung call should return an actionable error, not hold
+        # the agent's request open for the SDK's multi-minute default.
+        _client = anthropic.AsyncAnthropic(timeout=45.0, max_retries=1)
     return _client
 
 

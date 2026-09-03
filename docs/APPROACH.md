@@ -36,9 +36,36 @@ case-only brand differences match with a note instead of failing).
 | Jenny: exact warning, all-caps prefix, people get creative | Deterministic exact-text check + case check + word-level diff of any tampering; title-case prefix is an automatic fail (her real example is a unit test and test label #03) |
 | Jenny: imperfect photos | Model reports readability issues; these force a "double-check" verdict rather than a silent false pass; unreadable images return a clear "request a better image" style error |
 | Dave: STONE'S THROW vs Stone's Throw needs judgment | Case-only difference = match with a note; punctuation/spacing difference = "check formatting" (never silently passed, never hard-failed); his example is a unit test and test label #06 |
-| Dave: don't make my life harder | No login, no configuration, no new workflow — drop image, type four fields you already have open in COLA, read the answer |
+| Dave: don't make my life harder | No login, no configuration, no new workflow, no required typing — drop an image and read the answer; the four comparison fields are optional and batch mode takes them as a CSV instead |
 | Marcus: firewall blocks many outbound domains | Exactly one external dependency: the Anthropic API over HTTPS (single allowlist entry). Documented below as the key production consideration |
 | Marcus: standalone proof-of-concept, no COLA integration | Standalone web app; CSV import stands in for a future COLA data feed |
+
+## Two questions the requirements invite
+
+**How is a proof of concept "standalone" when it uses an API key?**
+"Standalone" in the brief means *no COLA integration* — Marcus: "For this
+proof of concept, assume it's a standalone application." It does not mean
+air-gapped. The prototype deliberately has exactly one external dependency —
+the Anthropic API over HTTPS, a single entry on the firewall allowlist Marcus
+worries about — and everything that constitutes a *decision* runs locally in
+deterministic code. The production path keeps the architecture intact and
+swaps only the endpoint: Claude on AWS GovCloud (Bedrock) or another
+FedRAMP-authorized deployment. That swap touches one file
+([app/extraction.py](../app/extraction.py)).
+
+**How is it "~5 seconds" if an agent has to type four fields?**
+They don't. The 5-second requirement is about processing time — Sarah: "if the
+tool takes longer than that to *give a result*, people will just stop using
+it." The workflow is designed so typing is never on the critical path:
+
+- Upload alone does a full read of the label and the always-mandatory
+  government warning check — zero fields required.
+- The four comparison fields exist for when an agent *wants* the label checked
+  against the application; each empty field simply skips that comparison.
+- At real volume (Sarah's 200–300 label dumps) nobody types anything: batch
+  mode takes the application data as a CSV keyed by filename.
+- Every single result shows its measured elapsed time, so the 5-second claim
+  is continuously verified in front of the user.
 
 ## Tools used
 
@@ -90,6 +117,22 @@ case-only brand differences match with a note instead of failing).
 - **Batch CSV matches on filename** — simplest possible contract for a
   prototype; a real integration would key on COLA application ID.
 
+## Hardening for a public demo URL
+
+Because the deployed prototype is reachable by anyone with the link, it ships
+with guardrails a pure localhost demo wouldn't need:
+
+- **Per-IP rate limiting** (40 API requests/minute) so the demo's API budget
+  can't be drained by a stray crawler.
+- **Bounded memory in batch mode**: images are read under the same semaphore
+  that limits concurrent model calls, so at most 8 images are in RAM at once
+  even for a 300-file upload on a small instance.
+- **Client timeouts**: the Anthropic call is capped at 45 seconds with one
+  retry — a hung upstream returns an actionable error instead of a stuck
+  spinner.
+- **Escaped rendering**: everything the model transcribes (which is ultimately
+  attacker-controllable via the label image) is HTML-escaped before display.
+
 ## What I'd do next
 
 1. Side-by-side view: label image with bounding-box highlights on each checked
@@ -98,5 +141,6 @@ case-only brand differences match with a note instead of failing).
    standards of fill).
 3. Audit log + reviewer feedback loop ("agent overrode: same brand") that
    becomes regression tests for the matching rules.
-4. Queue-based batch for the 300-label case with progressive results streaming
-   into the table instead of one final response.
+4. Queue-based batch with results streaming into the table row-by-row (the UI
+   already chunks uploads into groups of 24 for genuine progress reporting;
+   a server-side queue is the next step).

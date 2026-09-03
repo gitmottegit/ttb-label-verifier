@@ -66,6 +66,14 @@ body {
   object-fit: contain; background: #fff; border-radius: 8px;
 }
 
+.examples { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.example-btn {
+  font-size: 1rem; font-weight: 600; color: var(--brand);
+  background: #eef4fb; border: 2px solid #c4d8ee; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer;
+}
+.example-btn:hover { background: #dce9f7; border-color: var(--brand); }
+
 label { display: block; font-weight: 600; margin-bottom: 12px; }
 input[type="text"] {
   display: block; width: 100%; font-size: 1.05rem; padding: 10px 12px;

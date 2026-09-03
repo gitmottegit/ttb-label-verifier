@@ -70,13 +70,35 @@ function showStatus(el, message, isError = false) {
 /* ---------- single ---------- */
 let singleFile = null;
 
-wireDropzone("drop-single", "file-single", (files) => {
-  singleFile = files[0];
+function setSingleFile(file) {
+  singleFile = file;
   const img = $("preview-single");
   img.src = URL.createObjectURL(singleFile);
   img.hidden = false;
   $("btn-single").disabled = false;
-});
+}
+
+wireDropzone("drop-single", "file-single", (files) => setSingleFile(files[0]));
+
+/* One-click examples: load a bundled label, leave every box empty, and run —
+   demonstrating that the tool needs zero typing to check a label. */
+async function runExample(path, name) {
+  const status = $("status-single");
+  try {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error();
+    setSingleFile(new File([await res.blob()], name, { type: "image/png" }));
+  } catch {
+    showStatus(status, "⚠️ Could not load the example image. Please retry.", true);
+    return;
+  }
+  $("form-single").reset();
+  $("form-single").requestSubmit();
+}
+$("ex-good").addEventListener("click", () =>
+  runExample("/static/examples/compliant.png", "example_compliant.png"));
+$("ex-bad").addEventListener("click", () =>
+  runExample("/static/examples/violation.png", "example_violation.png"));
 
 $("form-single").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -160,30 +182,56 @@ wireDropzone("drop-batch", "file-batch", (files) => {
   $("btn-batch").disabled = files.length === 0;
 });
 
+/* Labels are sent in chunks so a 300-image run shows genuine progress and no
+   single request grows large enough to hit an upload or proxy limit. */
+const BATCH_CHUNK_SIZE = 24;
+
 $("btn-batch").addEventListener("click", async () => {
   const btn = $("btn-batch"), status = $("status-batch"), out = $("result-batch");
   btn.disabled = true;
   out.hidden = true;
-  showStatus(status,
-    `Checking ${batchFiles.length} labels… they are processed in parallel, so even a big
-     batch only takes a little while.<div class="progressbar"><div style="width:30%"></div></div>`);
 
-  const body = new FormData();
-  batchFiles.forEach((f) => body.append("images", f));
   const csv = $("csv-batch").files[0];
-  if (csv) body.append("applications_csv", csv);
+  const chunks = [];
+  for (let i = 0; i < batchFiles.length; i += BATCH_CHUNK_SIZE) {
+    chunks.push(batchFiles.slice(i, i + BATCH_CHUNK_SIZE));
+  }
 
+  const progress = (done) => showStatus(status,
+    `Checking labels… ${done} of ${batchFiles.length} done.
+     <div class="progressbar"><div style="width:${
+       Math.max(3, Math.round((done / batchFiles.length) * 100))}%"></div></div>`);
+  progress(0);
+
+  const results = [];
+  let csvMatched = 0;
+  const started = performance.now();
   try {
-    const res = await fetch("/api/batch", { method: "POST", body });
-    const data = await res.json();
-    status.hidden = true;
-    if (data.error) {
-      showStatus(status, "⚠️ " + esc(data.error), true);
-    } else {
-      out.hidden = false;
-      out.innerHTML = renderBatch(data);
-      wireBatchRows(data);
+    for (const chunk of chunks) {
+      const body = new FormData();
+      chunk.forEach((f) => body.append("images", f));
+      if (csv) body.append("applications_csv", csv);
+      const res = await fetch("/api/batch", { method: "POST", body });
+      const data = await res.json();
+      if (data.error) {
+        showStatus(status, "⚠️ " + esc(data.error), true);
+        btn.disabled = false;
+        return;
+      }
+      results.push(...data.results);
+      csvMatched += data.csv_rows_matched || 0;
+      progress(results.length);
     }
+    const summary = {
+      results,
+      count: results.length,
+      csv_rows_matched: csvMatched,
+      elapsed_ms: performance.now() - started,
+    };
+    status.hidden = true;
+    out.hidden = false;
+    out.innerHTML = renderBatch(summary);
+    wireBatchRows(summary);
   } catch {
     showStatus(status, "⚠️ Could not reach the server. Check your connection and retry.", true);
   } finally {
@@ -215,7 +263,8 @@ function renderBatch(data) {
       pill = `<span class="pill p-${ui.cls === "review" ? "review" : ui.cls}">${ui.icon} ${ui.title}</span>`;
       summary = r.report.summary;
     }
-    return `<tr class="batch-row" data-i="${i}" title="Click for details">
+    return `<tr class="batch-row" data-i="${i}" tabindex="0" role="button"
+        aria-expanded="false" title="Click for details">
       <td>${esc(r.filename)}</td>
       <td class="pill-cell">${pill}</td>
       <td>${esc(summary)}</td>
@@ -235,15 +284,24 @@ function renderBatch(data) {
 
 function wireBatchRows(data) {
   document.querySelectorAll("tr.batch-row").forEach((row) => {
-    row.addEventListener("click", () => {
+    const toggle = () => {
       const i = row.dataset.i;
       const detail = document.querySelector(`tr[data-detail="${i}"]`);
-      if (!detail.hidden) { detail.hidden = true; return; }
+      if (!detail.hidden) {
+        detail.hidden = true;
+        row.setAttribute("aria-expanded", "false");
+        return;
+      }
       const r = data.results[i];
       detail.firstElementChild.innerHTML = r.ok
         ? renderReport(r)
         : `<p class="note">${esc(r.error)}</p>`;
       detail.hidden = false;
+      row.setAttribute("aria-expanded", "true");
+    };
+    row.addEventListener("click", toggle);
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
     });
   });
 }

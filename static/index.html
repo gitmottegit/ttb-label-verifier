@@ -10,7 +10,7 @@
 <header class="site-header">
   <div class="wrap">
     <h1>🏷️ Label Verifier</h1>
-    <p class="tagline">Upload a label, enter what the application says, and get an answer in seconds.</p>
+    <p class="tagline">Upload a label picture and get an answer in seconds — no typing required.</p>
   </div>
 </header>
 
@@ -35,10 +35,18 @@
           </div>
           <img id="preview-single" class="preview" alt="Label preview" hidden>
         </div>
+        <div class="examples">
+          <span class="hint">No test image handy? One click:</span>
+          <button type="button" class="example-btn" id="ex-good">Try a compliant label</button>
+          <button type="button" class="example-btn" id="ex-bad">Try a label with a violation</button>
+        </div>
       </div>
 
       <div class="card">
-        <h2>Step 2 — What the application says</h2>
+        <h2>Step 2 — What the application says <span class="optional">(optional)</span></h2>
+        <p class="hint">No typing needed: with the boxes left empty, the label is still read in full
+        and its government warning checked. Fill a box only when you want it compared
+        against the application.</p>
         <form id="form-single">
           <label>Brand name
             <input type="text" name="brand_name" placeholder="e.g. OLD TOM DISTILLERY" autocomplete="off">
@@ -52,7 +60,6 @@
           <label>Net contents
             <input type="text" name="net_contents" placeholder="e.g. 750 mL" autocomplete="off">
           </label>
-          <p class="hint">Leave a box empty to skip that check. The government warning is always checked.</p>
           <button type="submit" id="btn-single" class="primary" disabled>Check this label</button>
         </form>
       </div>

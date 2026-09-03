@@ -3,9 +3,13 @@
 AI-assisted verification of alcohol beverage label applications — a prototype
 built for the TTB take-home project.
 
-Upload a label image, enter what the COLA application says, and get a
-plain-language **Pass / Double-check / Fail** answer in a few seconds. A batch
-mode accepts up to 300 labels at once, with an optional CSV of application data.
+Upload a label image and get a plain-language **Pass / Double-check / Fail**
+answer in a few seconds — no typing required. The label is read in full and its
+government warning always checked; the four application fields (brand, class,
+alcohol, net contents) are optional extras for when you want the label compared
+against what the COLA application says. A batch mode accepts up to 300 labels
+at once, with an optional CSV of application data. The home page includes
+one-click example labels so you can try it without any files of your own.
 
 **How it works in one sentence:** Claude vision *reads* the label (it tolerates
 glare, angles, and odd fonts); deterministic Python *decides* — every
@@ -13,6 +17,24 @@ compliance verdict comes from an auditable rule, never from model judgment.
 
 See [docs/APPROACH.md](docs/APPROACH.md) for design decisions, trade-offs, and
 assumptions.
+
+## Two fair questions
+
+**"Standalone" — but it calls a cloud API?** Standalone here means what the
+project brief means: no COLA system integration and no infrastructure to stand
+up — one process, one page, zero databases. The prototype has exactly one
+external dependency, the Anthropic API over HTTPS (a single firewall-allowlist
+entry). For production inside Treasury's network boundary, the identical
+architecture runs against Claude on AWS GovCloud (Bedrock) or another
+FedRAMP-authorized endpoint — only `extraction.py` changes; every compliance
+decision is already made locally in code.
+
+**"~5 seconds" — including typing?** The 5-second target is machine time per
+label, and the workflow is built so typing is optional: upload alone reads the
+full label and always checks the government warning. Agents only fill fields
+when they want a comparison against the application — and in batch mode even
+that is a CSV attachment, not typing. Every result displays its actual elapsed
+seconds so speed is verified, not claimed.
 
 ## What it checks
 
