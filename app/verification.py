@@ -296,7 +296,10 @@ def build_report(extracted: dict, application: dict) -> VerificationReport:
 def _summarize(overall: str, fields: list[FieldResult],
                warning: WarningResult, readability: list[str]) -> str:
     if overall == PASS:
-        return "All checks passed. Label matches the application and the government warning is exact."
+        if any(f.verdict != NOT_CHECKED for f in fields):
+            return "All checks passed. Label matches the application and the government warning is exact."
+        return ("The government warning is exact. No application fields were "
+                "entered, so nothing else was compared.")
     issues = [f.name.replace("_", " ") for f in fields if f.verdict in (MISMATCH, MISSING)]
     if warning.verdict == FAIL:
         issues.append("government warning")
