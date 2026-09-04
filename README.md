@@ -18,16 +18,30 @@ compliance verdict comes from an auditable rule, never from model judgment.
 See [docs/APPROACH.md](docs/APPROACH.md) for design decisions, trade-offs, and
 assumptions.
 
-## Two fair questions
+## Three fair questions
+
+**The last vendor's ML endpoints got firewalled — won't this too?** The
+pilot that failed ran *inside* TTB's network and called out to the vendor's
+ML endpoints, so the firewall broke half its features. This prototype
+inverts that: the model call happens **server-side**, on the hosting
+provider's network. Someone on a locked-down TTB workstation only needs to
+open the demo URL in a browser — ordinary outbound HTTPS web browsing — and
+TTB's firewall never carries a single ML-endpoint connection. Three
+scenarios, three answers: the **deployed demo** needs no firewall changes at
+all; a **local run** needs outbound HTTPS to exactly one domain
+(`api.anthropic.com`); **production** moves the model inside the boundary
+entirely (Claude on AWS GovCloud/Bedrock). And if the API ever is
+unreachable, the app degrades loudly — a clear "could not reach the label
+reading service" message, not silently broken features.
 
 **"Standalone" — but it calls a cloud API?** Standalone here means what the
 project brief means: no COLA system integration and no infrastructure to stand
 up — one process, one page, zero databases. The prototype has exactly one
-external dependency, the Anthropic API over HTTPS (a single firewall-allowlist
-entry). For production inside Treasury's network boundary, the identical
-architecture runs against Claude on AWS GovCloud (Bedrock) or another
-FedRAMP-authorized endpoint — only `extraction.py` changes; every compliance
-decision is already made locally in code.
+external dependency, the Anthropic API over HTTPS. For production inside
+Treasury's network boundary, the identical architecture runs against Claude
+on AWS GovCloud (Bedrock) or another FedRAMP-authorized endpoint — only
+`extraction.py` changes; every compliance decision is already made locally
+in code.
 
 **"~5 seconds" — including typing?** The 5-second target is machine time per
 label, and the workflow is built so typing is optional: upload alone reads the

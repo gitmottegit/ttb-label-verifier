@@ -37,7 +37,7 @@ case-only brand differences match with a note instead of failing).
 | Jenny: imperfect photos | Model reports readability issues; these force a "double-check" verdict rather than a silent false pass; unreadable images return a clear "request a better image" style error |
 | Dave: STONE'S THROW vs Stone's Throw needs judgment | Case-only difference = match with a note; punctuation/spacing difference = "check formatting" (never silently passed, never hard-failed); his example is a unit test and test label #06 |
 | Dave: don't make my life harder | No login, no configuration, no new workflow, no required typing — drop an image and read the answer; the four comparison fields are optional and batch mode takes them as a CSV instead |
-| Marcus: firewall blocks many outbound domains | Exactly one external dependency: the Anthropic API over HTTPS (single allowlist entry). Documented below as the key production consideration |
+| Marcus: firewall blocks many outbound domains; the vendor pilot's ML endpoints got blocked | The model call is server-side, so the deployed demo needs nothing from TTB's firewall but ordinary HTTPS browsing — the vendor's in-network-client failure mode is designed out. Local runs need one domain; production moves the model inside the boundary (GovCloud/Bedrock). Documented below |
 | Marcus: standalone proof-of-concept, no COLA integration | Standalone web app; CSV import stands in for a future COLA data feed |
 
 ## Two questions the requirements invite
@@ -105,11 +105,15 @@ it." The workflow is designed so typing is never on the critical path:
 
 ## Trade-offs and known limitations
 
-- **Cloud API dependency**: the prototype calls the Anthropic API, which the
-  TTB firewall would need to allowlist (one domain). For production, the same
-  architecture runs against Claude in **AWS GovCloud (Bedrock)** or a
-  FedRAMP-authorized deployment — only `extraction.py` changes; the entire
-  decision layer is local and offline.
+- **Cloud API dependency**: the prototype calls the Anthropic API — but from
+  the *server*, so the hosted demo asks nothing of TTB's firewall beyond
+  ordinary HTTPS browsing (unlike the scanning-vendor pilot, whose in-network
+  client called its ML endpoints straight into the firewall). A local run
+  needs one allowlisted domain. For production, the same architecture runs
+  against Claude in **AWS GovCloud (Bedrock)** or a FedRAMP-authorized
+  deployment — only `extraction.py` changes; the entire decision layer is
+  local and offline, and an unreachable API produces a clear actionable
+  error, never silently degraded features.
 - **Free-tier hosting cold starts**: the demo deployment may take ~30s to wake
   after idling — that's the host's spin-up, not processing time. Per-label
   timing is displayed in-app to keep the two separate.
