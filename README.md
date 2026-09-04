@@ -49,6 +49,10 @@ seconds so speed is verified, not claimed.
 
 ## Run it locally
 
+> **Reviewing from a restricted network?** If your firewall blocks the hosted
+> demo URL, the local setup below takes about 3 minutes and needs outbound
+> HTTPS to `api.anthropic.com` only.
+
 Requires Python 3.11+ and an [Anthropic API key](https://console.anthropic.com/).
 
 ```bash
