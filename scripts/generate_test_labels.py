@@ -45,7 +45,8 @@ def _center(draw: ImageDraw.ImageDraw, y: int, text: str,
 
 
 def make_label(filename: str, brand: str, class_type: str, abv: str,
-               net: str, warning: str | None, warning_bold: bool = True) -> None:
+               net: str, warning: str | None, warning_bold: bool = True,
+               warning_size: int = 24) -> None:
     img = Image.new("RGB", (W, H), CREAM)
     d = ImageDraw.Draw(img)
     d.rectangle([24, 24, W - 24, H - 24], outline=GOLD, width=6)
@@ -66,15 +67,17 @@ def make_label(filename: str, brand: str, class_type: str, abv: str,
                 _font(22), GOLD) + 40
 
     if warning:
-        wrapped = textwrap.fill(warning, width=58)
+        # Wrap and space proportionally to the type size so a "tiny text"
+        # label really does bury the warning the way Jenny described.
+        wrapped = textwrap.fill(warning, width=int(58 * 24 / warning_size))
         prefix_end = wrapped.find(":") + 1
         d.line([60, H - 330, W - 60, H - 330], fill=INK, width=2)
         wy = H - 300
-        font_bold, font_reg = _font(24, bold=True), _font(24)
+        font_bold, font_reg = _font(warning_size, bold=True), _font(warning_size)
         for i, line in enumerate(wrapped.split("\n")):
             font = font_bold if (warning_bold and i == 0 and prefix_end > 0) else font_reg
             d.text((70, wy), line, font=font, fill=INK)
-            wy += 34
+            wy += int(warning_size * 34 / 24)
 
     img.save(OUT / filename)
     print(f"wrote {OUT / filename}")
@@ -125,6 +128,12 @@ LABELS = [
          class_type="Straight Rye Whiskey",
          abv="45% Alc./Vol. (90 Proof)", net="750 mL",
          warning=INJECTION_TEXT, warning_bold=False),
+    # 8. Correct wording buried in tiny text — Jenny's "smaller font" trick.
+    #    Wording/caps pass, but conspicuousness should force a double-check.
+    dict(filename="08_tiny_warning.png", brand="OLD TOM DISTILLERY",
+         class_type="Kentucky Straight Bourbon Whiskey",
+         abv="45% Alc./Vol. (90 Proof)", net="750 mL",
+         warning=CORRECT_WARNING, warning_size=11),
 ]
 
 

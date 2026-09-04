@@ -46,7 +46,7 @@ seconds so speed is verified, not claimed.
 | Net contents | Compared by volume with unit conversion (`750 mL` = `0.75 L`) |
 | Producer name & address | Containment-aware match — label phrasing like `DISTILLED AND BOTTLED BY …` around the application's value still matches |
 | Country of origin | Checked when the application provides one (imports); `PRODUCT OF FRANCE` matches `France` |
-| Government warning | Always checked: must be present, word-for-word exact per 27 CFR 16.21 (verified character-for-character against the official CFR text), and `GOVERNMENT WARNING:` must be all-caps. A prefix that doesn't appear bold (27 CFR 16.22) flags a double-check. Failures include a word-level diff of what changed |
+| Government warning | Always checked: must be present, word-for-word exact per 27 CFR 16.21 (verified character-for-character against the official CFR text), and `GOVERNMENT WARNING:` must be all-caps. A prefix that doesn't appear bold, or a warning buried in unusually small type (27 CFR 16.22), flags a double-check. Failures include a word-level diff of what changed |
 | Image quality | Glare / angle / blur issues are reported and force a "double-check" verdict instead of a false pass |
 
 ## Run it locally
@@ -68,11 +68,11 @@ uvicorn app.main:app --reload
 ```
 
 Open http://127.0.0.1:8000 and try the images in [`test_labels/`](test_labels/)
-— one compliant label, five with realistic violations, and one
-**prompt-injection attempt** (a label that prints instructions telling the AI
-to approve it — the architecture ignores it; see
-[docs/APPROACH.md](docs/APPROACH.md)). [`applications.csv`](test_labels/applications.csv)
-exercises batch mode.
+— one compliant label, six with realistic violations (including the correct
+warning buried in tiny text), and one **prompt-injection attempt** (a label
+that prints instructions telling the AI to approve it — the architecture
+ignores it; see [docs/APPROACH.md](docs/APPROACH.md)).
+[`applications.csv`](test_labels/applications.csv) exercises batch mode.
 
 ### Docker
 
@@ -118,6 +118,6 @@ app/
   verification.py  All compliance rules (pure, unit-tested)
 static/            Vanilla HTML/CSS/JS single-page UI — no build step
 scripts/           Synthetic test-label generator (Pillow)
-test_labels/       Generated fixtures: 1 compliant + 5 violation labels + CSV
+test_labels/       Generated fixtures: 1 compliant + 7 violation/adversarial labels + CSV
 tests/             Unit tests for every compliance rule
 ```

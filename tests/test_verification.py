@@ -81,6 +81,25 @@ def test_unbold_warning_prefix_needs_review_not_fail():
     assert any("bold" in p for p in report.warning.problems)
 
 
+def test_tiny_warning_needs_review_not_fail():
+    # Jenny: "people try to get creative... smaller font, burying it in tiny text."
+    correct = f"{v.WARNING_PREFIX} {v.WARNING_BODY}"
+    report = v.build_report(
+        {"government_warning_verbatim": correct, "warning_appears_conspicuous": False},
+        {})
+    assert report.warning.verdict == v.PASS
+    assert report.overall == v.NEEDS_REVIEW
+    assert any("small" in p for p in report.warning.problems)
+
+
+def test_unknown_conspicuousness_does_not_flag():
+    correct = f"{v.WARNING_PREFIX} {v.WARNING_BODY}"
+    report = v.build_report(
+        {"government_warning_verbatim": correct, "warning_appears_conspicuous": None},
+        {})
+    assert report.overall == v.PASS
+
+
 def test_smart_quotes_normalized():
     r = v.compare_text_field("brand_name", "Stone’s Throw", "Stone's Throw")
     assert r.verdict == v.MATCH

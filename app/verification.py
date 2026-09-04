@@ -311,6 +311,14 @@ def build_report(extracted: dict, application: dict) -> VerificationReport:
         warning.problems.append(
             'The "GOVERNMENT WARNING:" lead-in may not be in bold type '
             "(27 CFR 16.22 requires bold) — check by eye.")
+    # Same treatment for the "bury it in tiny text" trick: exact millimeter
+    # type sizes can't be measured from a photo, so conspicuousness asks for
+    # a glance rather than failing outright.
+    if warning.verdict == PASS and extracted.get("warning_appears_conspicuous") is False:
+        warning.problems.append(
+            "The warning looks unusually small or inconspicuous next to the "
+            "rest of the label (27 CFR 16.22 sets minimum type sizes) — "
+            "check by eye.")
 
     readability = [str(i) for i in (extracted.get("readability_issues") or [])]
 

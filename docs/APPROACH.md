@@ -33,7 +33,7 @@ case-only brand differences match with a note instead of failing).
 | Sarah: results in ~5 seconds or nobody uses it | Single Sonnet vision call with small output budget; images downscaled to the vision sweet spot before upload; elapsed time shown on every result so slowness is visible, not suspected |
 | Sarah: 200–300 label dumps from big importers | `/api/batch`: up to 300 images, 8 concurrent model calls, optional CSV mapping `filename → application fields`, roll-up summary (n passed / n to check / n failed) |
 | Sarah: "something my mother could figure out" | One page, two big steps, one button, three verdict colors with plain-language sentences; no jargon (verdicts are "Looks good / Please double-check / Problems found") |
-| Jenny: exact warning, all-caps prefix, people get creative | Deterministic exact-text check + case check + word-level diff of any tampering; title-case prefix is an automatic fail (her real example is a unit test and test label #03) |
+| Jenny: exact warning, all-caps prefix, people get creative ("smaller font, burying it in tiny text") | Deterministic exact-text check + case check + word-level diff of any tampering; title-case prefix is an automatic fail (her real example is a unit test and test label #03); a warning printed in conspicuously tiny type flags a double-check (test label #08 is exactly that trick) |
 | Jenny: imperfect photos | Model reports readability issues; these force a "double-check" verdict rather than a silent false pass; unreadable images return a clear "request a better image" style error |
 | Dave: STONE'S THROW vs Stone's Throw needs judgment | Case-only difference = match with a note; punctuation/spacing difference = "check formatting" (never silently passed, never hard-failed); his example is a unit test and test label #06 |
 | Dave: don't make my life harder | No login, no configuration, no new workflow, no required typing — drop an image and read the answer; the four comparison fields are optional and batch mode takes them as a CSV instead |
@@ -89,11 +89,13 @@ it." The workflow is designed so typing is never on the critical path:
   name/address, country of origin (imports), and the government warning.
   Producer/country use containment-aware matching because labels wrap those
   values in phrases ("DISTILLED AND BOTTLED BY …", "PRODUCT OF …").
-- **Warning bold requirement**: 27 CFR 16.22 requires the `GOVERNMENT
-  WARNING` lead-in in bold type. Bold detection from a photo is inherently
-  fuzzy, so a warning whose lead-in doesn't appear bold gets a
-  "double-check by eye" flag rather than an automatic fail. Wording and caps
-  — which are checkable exactly — are enforced exactly.
+- **Warning bold and type-size requirements**: 27 CFR 16.22 requires the
+  `GOVERNMENT WARNING` lead-in in bold type and sets minimum type sizes.
+  Neither boldness nor millimeters can be measured reliably from a photo, so
+  a lead-in that doesn't appear bold, or a warning that looks buried in
+  conspicuously tiny text (Jenny's "smaller font" trick — test label #08),
+  gets a "double-check by eye" flag rather than an automatic fail. Wording
+  and caps — which are checkable exactly — are enforced exactly.
 - **One label image per application**: multi-image applications (front + back
   label) would need a small extension to group uploads.
 - **English-language labels**, consistent with COLA applications.

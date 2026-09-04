@@ -55,6 +55,7 @@ EXTRACTION_TOOL = {
             "country_of_origin": {"type": ["string", "null"], "description": "Country of origin statement if printed."},
             "government_warning_verbatim": {"type": ["string", "null"], "description": "The full government warning statement transcribed verbatim, character for character, PRESERVING the exact capitalization printed on the label. Null if absent."},
             "warning_appears_bold": {"type": ["boolean", "null"], "description": "Whether the 'GOVERNMENT WARNING:' lead-in appears bold relative to surrounding text."},
+            "warning_appears_conspicuous": {"type": ["boolean", "null"], "description": "Whether the government warning is reasonably conspicuous — false if it is printed markedly smaller than comparable label text or visually buried. Null if no warning or unclear."},
             "readability_issues": {"type": "array", "items": {"type": "string"}, "description": "Any conditions that made the label hard to read (glare, angle, blur, low resolution, text partially cut off). Empty if the image is clean."},
             "confidence": {"type": "string", "enum": ["high", "medium", "low"], "description": "Overall confidence in the transcription."},
         },
