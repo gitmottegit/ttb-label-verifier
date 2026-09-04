@@ -3,6 +3,9 @@
 AI-assisted verification of alcohol beverage label applications — a prototype
 built for the TTB take-home project.
 
+**Live demo:** https://ttb-label-verifier-demo.azurewebsites.net
+(mirror: https://ttb-label-verifier-ga89.onrender.com)
+
 Upload a label image and get a plain-language **Pass / Double-check / Fail**
 answer in a few seconds — no typing required. The label is read in full and its
 government warning always checked; the four application fields (brand, class,
@@ -111,8 +114,10 @@ Regenerate the synthetic test labels with
 
 ## Deploy
 
-The repo includes a [`render.yaml`](render.yaml) blueprint (Render) and a
-`Dockerfile` (any container host). Set one environment variable:
+The primary demo runs on **Azure App Service** (Linux, Python 3.12 —
+`azurewebsites.net` is reachable from most government networks); a mirror
+runs on Render from [`render.yaml`](render.yaml). A `Dockerfile` covers any
+container host. In every case, set one environment variable:
 `ANTHROPIC_API_KEY`.
 
 ## API
