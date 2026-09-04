@@ -44,7 +44,9 @@ seconds so speed is verified, not claimed.
 | Class / type | Same text rules as brand name |
 | Alcohol content | Compared numerically (`45% Alc./Vol.` = `45.0 % alc/vol`); proof is cross-checked against ABV (90 proof must equal 45%) |
 | Net contents | Compared by volume with unit conversion (`750 mL` = `0.75 L`) |
-| Government warning | Always checked: must be present, word-for-word exact per 27 CFR 16.21, and `GOVERNMENT WARNING:` must be all-caps. Failures include a word-level diff of what changed |
+| Producer name & address | Containment-aware match — label phrasing like `DISTILLED AND BOTTLED BY …` around the application's value still matches |
+| Country of origin | Checked when the application provides one (imports); `PRODUCT OF FRANCE` matches `France` |
+| Government warning | Always checked: must be present, word-for-word exact per 27 CFR 16.21 (verified character-for-character against the official CFR text), and `GOVERNMENT WARNING:` must be all-caps. A prefix that doesn't appear bold (27 CFR 16.22) flags a double-check. Failures include a word-level diff of what changed |
 | Image quality | Glare / angle / blur issues are reported and force a "double-check" verdict instead of a false pass |
 
 ## Run it locally

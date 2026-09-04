@@ -199,6 +199,28 @@ def compare_net_contents(label_value: str | None, app_value: str | None) -> Fiel
     return FieldResult(name, label_value, app_value, MATCH)
 
 
+def compare_containment_field(name: str, label_value: str | None,
+                              app_value: str | None) -> FieldResult:
+    """Compare a field where the label often carries extra words around the
+    application value — e.g. the application says "Old Tom Distilling Co.,
+    Bardstown, KY" while the label prints "DISTILLED AND BOTTLED BY OLD TOM
+    DISTILLING CO., BARDSTOWN, KY". The application value appearing within
+    the label text counts as a match."""
+    if not app_value or not app_value.strip():
+        return FieldResult(name, label_value, app_value, NOT_CHECKED)
+    if not label_value or not label_value.strip():
+        return FieldResult(name, label_value, app_value, MISSING,
+                           "Not found on the label.")
+    exact = compare_text_field(name, label_value, app_value)
+    if exact.verdict in (MATCH, MATCH_FORMATTING):
+        return exact
+    if _fold_loose(app_value) in _fold_loose(label_value):
+        return FieldResult(name, clean(label_value), clean(app_value), MATCH,
+                           "Application text appears within the label's wording.")
+    return FieldResult(name, clean(label_value), clean(app_value), MISMATCH,
+                       "Label does not match the application.")
+
+
 # --- government warning -----------------------------------------------------
 
 def check_government_warning(verbatim: str | None) -> WarningResult:
@@ -275,14 +297,27 @@ def build_report(extracted: dict, application: dict) -> VerificationReport:
                                 application.get("alcohol_content")),
         compare_net_contents(extracted.get("net_contents"),
                              application.get("net_contents")),
+        compare_containment_field("producer_name_address",
+                                  extracted.get("bottler_name_address"),
+                                  application.get("producer_name_address")),
+        compare_containment_field("country_of_origin",
+                                  extracted.get("country_of_origin"),
+                                  application.get("country_of_origin")),
     ]
     warning = check_government_warning(extracted.get("government_warning_verbatim"))
+    # 27 CFR 16.22 also requires the lead-in in bold type. Bold detection from
+    # a photo is fuzzy, so a "not bold" reading asks for a glance, never fails.
+    if warning.verdict == PASS and extracted.get("warning_appears_bold") is False:
+        warning.problems.append(
+            'The "GOVERNMENT WARNING:" lead-in may not be in bold type '
+            "(27 CFR 16.22 requires bold) — check by eye.")
 
     readability = [str(i) for i in (extracted.get("readability_issues") or [])]
 
     if warning.verdict == FAIL or any(f.verdict in (MISMATCH, MISSING) for f in fields):
         overall = FAIL
-    elif readability or any(f.verdict == MATCH_FORMATTING for f in fields):
+    elif (readability or warning.problems
+          or any(f.verdict == MATCH_FORMATTING for f in fields)):
         overall = NEEDS_REVIEW
     else:
         overall = PASS
@@ -309,6 +344,9 @@ def _summarize(overall: str, fields: list[FieldResult],
     parts = []
     if soft:
         parts.append("formatting differs on " + ", ".join(soft))
+    if warning.verdict == PASS and warning.problems:
+        parts.append("warning formatting needs a glance")
     if readability:
         parts.append("image quality issues noted")
-    return "Please double-check: " + "; ".join(parts) + "."
+    return "Please double-check: " + "; ".join(parts) + "." if parts else \
+        "Please double-check this label."

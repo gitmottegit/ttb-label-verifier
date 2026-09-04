@@ -60,6 +60,12 @@
           <label>Net contents
             <input type="text" name="net_contents" placeholder="e.g. 750 mL" autocomplete="off">
           </label>
+          <label>Producer name & address
+            <input type="text" name="producer_name_address" placeholder="e.g. Old Tom Distilling Co., Bardstown, KY" autocomplete="off">
+          </label>
+          <label>Country of origin <span class="optional">(imports)</span>
+            <input type="text" name="country_of_origin" placeholder="e.g. Product of France" autocomplete="off">
+          </label>
           <button type="submit" id="btn-single" class="primary" disabled>Check this label</button>
         </form>
       </div>
@@ -89,7 +95,8 @@
       <div class="card">
         <h2>Step 2 — Application data <span class="optional">(optional)</span></h2>
         <p class="hint">Attach a CSV with columns <code>filename, brand_name, class_type,
-        alcohol_content, net_contents</code> to compare each label against its application.
+        alcohol_content, net_contents, producer_name_address, country_of_origin</code>
+        (extra columns optional) to compare each label against its application.
         Without it, each label is still read and its government warning checked.</p>
         <label class="file-label">CSV file
           <input type="file" id="csv-batch" accept=".csv,text/csv">

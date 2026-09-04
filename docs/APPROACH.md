@@ -84,15 +84,16 @@ it." The workflow is designed so typing is never on the critical path:
 
 ## Assumptions
 
-- **Scope of fields**: verification compares the four fields agents check most
-  (brand, class/type, alcohol content, net contents) plus the always-mandatory
-  government warning. Bottler address and country of origin are extracted and
-  displayed but not auto-compared — the same comparison machinery extends to
-  them trivially once the matching rules are agreed with the compliance team.
-- **Warning bold requirement**: bold detection from a photo is inherently
-  fuzzy, so the model reports an `appears bold` opinion that is surfaced but
-  not used to fail a label. Wording and caps — which are checkable exactly —
-  are enforced exactly.
+- **Scope of fields**: all seven TTB-mandated elements from the brief are
+  verified — brand, class/type, alcohol content, net contents, producer
+  name/address, country of origin (imports), and the government warning.
+  Producer/country use containment-aware matching because labels wrap those
+  values in phrases ("DISTILLED AND BOTTLED BY …", "PRODUCT OF …").
+- **Warning bold requirement**: 27 CFR 16.22 requires the `GOVERNMENT
+  WARNING` lead-in in bold type. Bold detection from a photo is inherently
+  fuzzy, so a warning whose lead-in doesn't appear bold gets a
+  "double-check by eye" flag rather than an automatic fail. Wording and caps
+  — which are checkable exactly — are enforced exactly.
 - **One label image per application**: multi-image applications (front + back
   label) would need a small extension to group uploads.
 - **English-language labels**, consistent with COLA applications.
@@ -116,6 +117,20 @@ it." The workflow is designed so typing is never on the critical path:
   always shown so the agent can spot-check what the machine read.
 - **Batch CSV matches on filename** — simplest possible contract for a
   prototype; a real integration would key on COLA application ID.
+
+## A subtlety from the regulations: why ABV is compared exactly
+
+27 CFR allows tolerances between the *labeled* alcohol content and the
+*actual product* as measured in the lab (±0.3 points for distilled spirits
+and malt beverages; ±1.0 above 14% ABV / ±1.5 at or below for wine — and a
+tolerance may never carry a product across a class or tax boundary). Those
+tolerances do **not** apply to what this tool checks: whether the number on
+the label matches the number on the *application*. Two statements of the
+same intended value should agree exactly, so the comparison here is exact —
+applying the lab tolerance to a label-vs-application check would silently
+wave through transcription errors. If TTB later wanted actual-vs-labeled
+checking (lab data in the CSV), the per-commodity tolerances above are a
+five-line rule addition.
 
 ## Adversarial robustness: what if the label talks back?
 
@@ -165,12 +180,30 @@ with guardrails a pure localhost demo wouldn't need:
 - **Escaped rendering**: everything the model transcribes (which is ultimately
   attacker-controllable via the label image) is HTML-escaped before display.
 
+## TTB sources reviewed
+
+The rules in this prototype weren't guessed from the brief — they were checked
+against TTB's own published guidance. What each source contributed:
+
+| Source | What it shaped |
+|---|---|
+| 27 CFR Part 16 (govinfo.gov official CFR text) | The government warning is verified **character-for-character** against §16.21; §16.22 supplied the formatting rules behind the all-caps check and the bold "double-check by eye" flag |
+| TTB Beverage Alcohol Manual, Distilled Spirits Vol. 2 (mandatory information, type size, name & address, standards of fill chapters) + "Anatomy of a Distilled Spirits Label" | Confirmed the seven mandatory elements; supplied the prescribed name/address phrasings ("DISTILLED AND BOTTLED BY …") and country-of-origin phrasings ("PRODUCT OF …") that the containment-aware matcher is built around |
+| TTB labeling-modernization rules (T.D. TTB-158, TTB-176, TTB-200) and current 27 CFR Part 5 pages | The ±0.3pp spirits ABV tolerance discussed above (and the note that BAM's older 0.15% figure is obsolete); the "same field of vision" placement rule; the current 25 authorized standards of fill — placement and fill checks are documented as future rule packs below because they're commodity-specific |
+| Wine (27 CFR Part 4) and malt beverage (Part 7) labeling pages | Per-commodity ABV tolerances (±1.0/±1.5 wine, ±0.3 malt) and the fact that wine 7–14% may substitute "table wine" for a numeric ABV — recorded so a wine rule pack doesn't wrongly fail such labels |
+| TTB Allowable Revisions chart | Which label changes need no new COLA — context for how a production tool would triage "revision vs. new application" |
+| TTB Procedure 2017-2 (personalized labels) and T.D. TTB-53 (allergens, voluntary) | Confirmed out of scope for element verification, documented so the scope is a decision, not an omission |
+| TTB F 5100.31 (the COLA form itself) and the Public COLA Registry | The application-side field names the comparison inputs mirror |
+| COLA processing-times page | The queue pressure that motivates the ~5-second target |
+
 ## What I'd do next
 
 1. Side-by-side view: label image with bounding-box highlights on each checked
    field (the vision API can return coordinates).
-2. Beverage-type-specific rule packs (wine vintage/appellation, beer specifics,
-   standards of fill).
+2. Beverage-type-specific rule packs from the doctrine gathered above:
+   standards of fill (25 authorized spirits sizes per T.D. TTB-200), the
+   "same field of vision" placement rule, spirits age/commodity statements,
+   wine vintage/appellation and the "table wine" ABV exemption.
 3. Audit log + reviewer feedback loop ("agent overrode: same brand") that
    becomes regression tests for the matching rules.
 4. Queue-based batch with results streaming into the table row-by-row (the UI

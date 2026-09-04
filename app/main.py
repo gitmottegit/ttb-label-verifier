@@ -83,19 +83,24 @@ async def verify(
     class_type: str = Form(""),
     alcohol_content: str = Form(""),
     net_contents: str = Form(""),
+    producer_name_address: str = Form(""),
+    country_of_origin: str = Form(""),
 ) -> JSONResponse:
     application = {
         "brand_name": brand_name.strip(),
         "class_type": class_type.strip(),
         "alcohol_content": alcohol_content.strip(),
         "net_contents": net_contents.strip(),
+        "producer_name_address": producer_name_address.strip(),
+        "country_of_origin": country_of_origin.strip(),
     }
     result = await _verify_one(image.filename or "label", await image.read(), application)
     return JSONResponse(result, status_code=200 if result["ok"] else 422)
 
 
 def parse_application_csv(data: bytes) -> dict[str, dict]:
-    """CSV columns: filename, brand_name, class_type, alcohol_content, net_contents."""
+    """CSV columns: filename, brand_name, class_type, alcohol_content,
+    net_contents, producer_name_address, country_of_origin (extras optional)."""
     rows: dict[str, dict] = {}
     text = data.decode("utf-8-sig", errors="replace")
     for row in csv.DictReader(io.StringIO(text)):
@@ -103,7 +108,8 @@ def parse_application_csv(data: bytes) -> dict[str, dict]:
         filename = row.get("filename")
         if filename:
             rows[filename] = {k: row.get(k, "") for k in
-                              ("brand_name", "class_type", "alcohol_content", "net_contents")}
+                              ("brand_name", "class_type", "alcohol_content", "net_contents",
+                               "producer_name_address", "country_of_origin")}
     return rows
 
 

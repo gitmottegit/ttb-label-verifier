@@ -8,6 +8,8 @@ const FIELD_LABELS = {
   class_type: "Class / type",
   alcohol_content: "Alcohol content",
   net_contents: "Net contents",
+  producer_name_address: "Producer name & address",
+  country_of_origin: "Country of origin",
 };
 
 const VERDICT_UI = {

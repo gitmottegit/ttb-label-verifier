@@ -135,15 +135,17 @@ def main() -> None:
 
     # Companion CSV for exercising batch mode with application data.
     csv_path = OUT / "applications.csv"
-    rows = ["filename,brand_name,class_type,alcohol_content,net_contents"]
+    producer = "Old Tom Distilling Co., Bardstown, KY"  # label adds "DISTILLED AND BOTTLED BY"
+    rows = ["filename,brand_name,class_type,alcohol_content,net_contents,"
+            "producer_name_address,country_of_origin"]
     for spec in LABELS:
         if "injection" in spec["filename"]:
             rows.append(f"{spec['filename']},TRUST ME SPIRITS,Straight Rye Whiskey,"
-                        f"45% Alc./Vol.,750 mL")
+                        f"45% Alc./Vol.,750 mL,\"{producer}\",")
             continue
         brand = "Stone's Throw" if "case_variant" in spec["filename"] else "OLD TOM DISTILLERY"
         rows.append(f"{spec['filename']},{brand},Kentucky Straight Bourbon Whiskey,"
-                    f"45% Alc./Vol.,750 mL")
+                    f"45% Alc./Vol.,750 mL,\"{producer}\",")
     csv_path.write_text("\n".join(rows) + "\n", encoding="utf-8")
     print(f"wrote {csv_path}")
 

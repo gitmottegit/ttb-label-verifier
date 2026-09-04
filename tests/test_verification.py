@@ -37,6 +37,50 @@ def test_missing_label_value():
     assert r.verdict == v.MISSING
 
 
+def test_producer_containment_matches():
+    # Labels wrap the address in phrases like "DISTILLED AND BOTTLED BY".
+    r = v.compare_containment_field(
+        "producer_name_address",
+        "DISTILLED AND BOTTLED BY OLD TOM DISTILLING CO., BARDSTOWN, KY",
+        "Old Tom Distilling Co., Bardstown, KY")
+    assert r.verdict == v.MATCH
+
+
+def test_producer_real_mismatch_fails():
+    r = v.compare_containment_field(
+        "producer_name_address",
+        "BOTTLED BY ACME SPIRITS, DENVER, CO",
+        "Old Tom Distilling Co., Bardstown, KY")
+    assert r.verdict == v.MISMATCH
+
+
+def test_country_of_origin_containment():
+    r = v.compare_containment_field(
+        "country_of_origin", "PRODUCT OF FRANCE", "France")
+    assert r.verdict == v.MATCH
+
+
+def test_country_of_origin_skipped_for_domestic():
+    # Domestic products: application leaves the field empty.
+    r = v.compare_containment_field("country_of_origin", None, "")
+    assert r.verdict == v.NOT_CHECKED
+
+
+def test_country_of_origin_missing_on_import():
+    r = v.compare_containment_field("country_of_origin", None, "France")
+    assert r.verdict == v.MISSING
+
+
+def test_unbold_warning_prefix_needs_review_not_fail():
+    correct = f"{v.WARNING_PREFIX} {v.WARNING_BODY}"
+    report = v.build_report(
+        {"government_warning_verbatim": correct, "warning_appears_bold": False},
+        {})
+    assert report.warning.verdict == v.PASS          # wording/caps are right
+    assert report.overall == v.NEEDS_REVIEW          # but bold needs a glance
+    assert any("bold" in p for p in report.warning.problems)
+
+
 def test_smart_quotes_normalized():
     r = v.compare_text_field("brand_name", "Stone’s Throw", "Stone's Throw")
     assert r.verdict == v.MATCH
