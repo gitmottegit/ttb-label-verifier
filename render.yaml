@@ -3,7 +3,7 @@ services:
   - type: web
     name: ttb-label-verifier
     runtime: python
-    plan: free
+    plan: starter  # always-on instance — no cold starts during review
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
