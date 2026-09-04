@@ -114,6 +114,13 @@ it." The workflow is designed so typing is never on the critical path:
   deployment — only `extraction.py` changes; the entire decision layer is
   local and offline, and an unreachable API produces a clear actionable
   error, never silently degraded features.
+- **Python in a .NET shop**: COLA is .NET, and this prototype is Python — by
+  design that never collides, because the app exposes plain HTTP endpoints
+  (`/api/verify`, `/api/batch`) that any .NET client, COLA included, can call
+  with zero Python knowledge. And if TTB later wants everything in-house on
+  one stack, the entire decision layer is a single pure-function module
+  (`verification.py`) with unit tests to port against — deliberately small
+  enough to rewrite in C# in days, not months.
 - **Free-tier hosting cold starts**: the demo deployment may take ~30s to wake
   after idling — that's the host's spin-up, not processing time. Per-label
   timing is displayed in-app to keep the two separate.
