@@ -66,8 +66,11 @@ uvicorn app.main:app --reload
 ```
 
 Open http://127.0.0.1:8000 and try the images in [`test_labels/`](test_labels/)
-— one compliant label and five with realistic violations, plus
-[`applications.csv`](test_labels/applications.csv) for batch mode.
+— one compliant label, five with realistic violations, and one
+**prompt-injection attempt** (a label that prints instructions telling the AI
+to approve it — the architecture ignores it; see
+[docs/APPROACH.md](docs/APPROACH.md)). [`applications.csv`](test_labels/applications.csv)
+exercises batch mode.
 
 ### Docker
 
